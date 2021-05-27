@@ -1,0 +1,22 @@
+name: build
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  style:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Zig
+        run: sudo snap install zig --classic --beta
+
+      - name: Build 
+        run: zig build

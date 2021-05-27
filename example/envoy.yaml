@@ -1,0 +1,229 @@
+bootstrap_extensions:
+- name: envoy.bootstrap.wasm
+  typed_config:
+    "@type": type.googleapis.com/envoy.extensions.wasm.v3.WasmService
+    singleton: true
+    config:
+      root_id: singleton
+      configuration:
+        "@type": type.googleapis.com/google.protobuf.StringValue
+        value: |
+          {
+            "root": "singleton",
+            "http": "",
+            "tcp": ""
+          }
+      vm_config:
+        vm_id: "ziglang_vm"
+        runtime: "envoy.wasm.runtime.v8"
+        code:
+          local:
+            filename: "zig-cache/lib/example.wasm"
+
+static_resources:
+  listeners:
+    - name: http-header-operation
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 18000
+      filter_chains:
+        - filters:
+            - name: envoy.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: my_plugin
+                codec_type: auto
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: local_service
+                      domains:
+                        - "*"
+                      routes:
+                        - match:
+                            prefix: "/"
+                          route:
+                            cluster: admin
+                http_filters:
+                  - name: envoy.filters.http.wasm
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
+                      config:
+                        root_id: http-header-operation
+                        configuration:
+                          "@type": type.googleapis.com/google.protobuf.StringValue
+                          value: |
+                            {
+                              "root": "",
+                              "http": "header-operation",
+                              "tcp": ""
+                            }
+                        vm_config:
+                          vm_id: "ziglang_vm"
+                          runtime: "envoy.wasm.runtime.v8"
+                          code:
+                            local:
+                              filename: "zig-cache/lib/example.wasm"
+                  - name: envoy.filters.http.router
+                    typed_config: {}
+
+    - name: http-body-operation
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 18001
+      filter_chains:
+        - filters:
+            - name: envoy.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: my_plugin
+                codec_type: auto
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: local_service
+                      domains:
+                        - "*"
+                      routes:
+                        - match:
+                            prefix: "/"
+                          route:
+                            cluster: admin
+                http_filters:
+                  - name: envoy.filters.http.wasm
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
+                      config:
+                        root_id: http-body-operation
+                        configuration:
+                          "@type": type.googleapis.com/google.protobuf.StringValue
+                          value: |
+                            {
+                              "root": "",
+                              "http": "body-operation",
+                              "tcp": ""
+                            }
+                        vm_config:
+                          vm_id: "ziglang_vm"
+                          runtime: "envoy.wasm.runtime.v8"
+                          code:
+                            local:
+                              filename: "zig-cache/lib/example.wasm"
+                  - name: envoy.filters.http.router
+                    typed_config: {}
+
+    - name: http-random-auth
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 18002
+      filter_chains:
+        - filters:
+            - name: envoy.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: my_plugin
+                codec_type: auto
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: local_service
+                      domains:
+                        - "*"
+                      routes:
+                        - match:
+                            prefix: "/"
+                          route:
+                            cluster: admin
+                http_filters:
+                  - name: envoy.filters.http.wasm
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
+                      config:
+                        root_id: http-random-auth
+                        configuration:
+                          "@type": type.googleapis.com/google.protobuf.StringValue
+                          value: |
+                            {
+                              "root": "",
+                              "http": "random-auth",
+                              "tcp": ""
+                            }
+                        vm_config:
+                          vm_id: "ziglang_vm"
+                          runtime: "envoy.wasm.runtime.v8"
+                          code:
+                            local:
+                              filename: "zig-cache/lib/example.wasm"
+                  - name: envoy.filters.http.router
+                    typed_config: {}
+
+    - name: tcp-total-data-size-counter
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 18003
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.wasm
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.wasm.v3.Wasm
+                config:
+                  root_id: tcp-total-data-size-counter
+                  configuration:
+                    "@type": type.googleapis.com/google.protobuf.StringValue
+                    value: |
+                      {
+                        "root": "",
+                        "http": "",
+                        "tcp": "total-data-size-counter"
+                      }
+                  vm_config:
+                    vm_id: "ziglang_vm"
+                    runtime: "envoy.wasm.runtime.v8"
+                    code:
+                      local:
+                        filename: "zig-cache/lib/example.wasm"
+
+            - name: envoy.tcp_proxy
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.tcp_proxy.v3.TcpProxy
+                stat_prefix: ingress
+                cluster: admin
+
+  clusters:
+    - name: admin
+      connect_timeout: 0.25s
+      type: STATIC
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: admin
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: 127.0.0.1
+                      port_value: 8001
+    - name: httpbin
+      connect_timeout: 5000s
+      type: strict_dns
+      lb_policy: round_robin
+      load_assignment:
+        cluster_name: httpbin
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: httpbin.org
+                      port_value: 80
+
+admin:
+  access_log_path: "/dev/null"
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 8001

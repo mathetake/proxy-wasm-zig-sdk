@@ -595,7 +595,9 @@ const HttpHeaderOperation = struct {
         if (std.mem.indexOf(u8, self.request_path.raw_data, "on-log-headers")) |_| {
             // Headers are all avaialable in onLog phase.
             var request_headers: hostcalls.HeaderMap = hostcalls.getHeaderMap(enums.MapType.HttpRequestHeaders) catch unreachable;
+            defer request_headers.deinit();
             var response_headers: hostcalls.HeaderMap = hostcalls.getHeaderMap(enums.MapType.HttpResponseHeaders) catch unreachable;
+            defer response_headers.deinit();
 
             // Log all the request/response headers.
             var iter = request_headers.map.iterator();

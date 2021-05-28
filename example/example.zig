@@ -708,7 +708,7 @@ const HttpBodyOperation = struct {
         if (std.mem.indexOf(u8, self.request_path.raw_data, "echo")) |_| {
             return enums.Action.Continue;
         } else if (std.mem.indexOf(u8, self.request_path.raw_data, "sha256-response")) |_| {
-            // Increment total_request_body_size to have the entire body size.
+            // Increment total_response_body_size to have the entire body size.
             self.total_response_body_size += body_size;
 
             // Wait until we see the entire body.
@@ -725,14 +725,14 @@ const HttpBodyOperation = struct {
             // Log the calculated sha256 of response body.
             const message = std.fmt.allocPrint(
                 allocator,
-                "response body sha256: {x}",
-                .{checksum},
+                "response body sha256 (original size={d}) : {x}",
+                .{ self.total_response_body_size, checksum },
             ) catch unreachable;
             defer allocator.free(message);
             hostcalls.log(enums.LogLevel.Info, message) catch unreachable;
 
             // Set the calculated sha256 to the response body.
-            hostcalls.setBufferBytes(enums.BufferType.HttpResponseBody, 0, self.total_request_body_size, message) catch unreachable;
+            hostcalls.replaceBufferBytes(enums.BufferType.HttpResponseBody, message) catch unreachable;
         }
         return enums.Action.Continue;
     }

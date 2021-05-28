@@ -79,7 +79,7 @@ const Root = struct {
         };
     }
 
-    // Implement types.RootContext.onVmStart.
+    // Implement contexts.RootContext.onVmStart.
     fn onVmStart(root_context: *contexts.RootContext, configuration_size: usize) bool {
         const self: *Self = @fieldParentPtr(Self, "root_context", root_context);
 
@@ -98,7 +98,7 @@ const Root = struct {
         return true;
     }
 
-    // Implement types.RootContext.onPluginStart.
+    // Implement contexts.RootContext.onPluginStart.
     fn onPluginStart(root_context: *contexts.RootContext, configuration_size: usize) bool {
         const self: *Self = @fieldParentPtr(Self, "root_context", root_context);
 
@@ -220,7 +220,7 @@ const Root = struct {
         return null;
     }
 
-    // Implement types.RootContext.onTick.
+    // Implement contexts.RootContext.onTick.
     fn onQueueReady(root_context: *contexts.RootContext, quque_id: u32) void {
         // We know that this is called for user-agents queue since that's the only queue we registered.
 
@@ -235,7 +235,7 @@ const Root = struct {
         hostcalls.log(enums.LogLevel.Info, message) catch unreachable;
     }
 
-    // Implement types.RootContext.onTick.
+    // Implement contexts.RootContext.onTick.
     fn onTick(root_context: *contexts.RootContext) void {
         const self: *Self = @fieldParentPtr(Self, "root_context", root_context);
 
@@ -301,7 +301,7 @@ const TcpTotalDataSizeCounter = struct {
         defer allocator.free(message);
         hostcalls.log(enums.LogLevel.Info, message) catch unreachable;
     }
-    // Implement types.TcpContext.onNewConnection.
+    // Implement contexts.TcpContext.onNewConnection.
     fn onNewConnection(tcp_context: *contexts.TcpContext) enums.Action {
         const self: *Self = @fieldParentPtr(Self, "tcp_context", tcp_context);
 
@@ -315,7 +315,7 @@ const TcpTotalDataSizeCounter = struct {
         return enums.Action.Continue;
     }
 
-    // Implement types.TcpContext.onDownstreamData.
+    // Implement contexts.TcpContext.onDownstreamData.
     fn onDownstreamData(tcp_context: *contexts.TcpContext, data_size: usize, end_of_stream: bool) enums.Action {
         const self: *Self = @fieldParentPtr(Self, "tcp_context", tcp_context);
 
@@ -326,7 +326,7 @@ const TcpTotalDataSizeCounter = struct {
         return enums.Action.Continue;
     }
 
-    // Implement types.TcpContext.onDownstreamClose.
+    // Implement contexts.TcpContext.onDownstreamClose.
     fn onDownstreamClose(tcp_context: *contexts.TcpContext, peer_type: enums.PeerType) void {
         const self: *Self = @fieldParentPtr(Self, "tcp_context", tcp_context);
 
@@ -345,7 +345,7 @@ const TcpTotalDataSizeCounter = struct {
         hostcalls.log(enums.LogLevel.Info, message) catch unreachable;
     }
 
-    // Implement types.TcpContext.onUpstreamData.
+    // Implement contexts.TcpContext.onUpstreamData.
     fn onUpstreamData(tcp_context: *contexts.TcpContext, data_size: usize, end_of_stream: bool) enums.Action {
         const self: *Self = @fieldParentPtr(Self, "tcp_context", tcp_context);
 
@@ -356,7 +356,7 @@ const TcpTotalDataSizeCounter = struct {
         return enums.Action.Continue;
     }
 
-    // Implement types.TcpContext.onUpstreamClose.
+    // Implement contexts.TcpContext.onUpstreamClose.
     fn onUpstreamClose(tcp_context: *contexts.TcpContext, peer_type: enums.PeerType) void {
         const self: *Self = @fieldParentPtr(Self, "tcp_context", tcp_context);
 
@@ -860,7 +860,7 @@ const HttpRandomAuth = struct {
             }
             hostcalls.sendLocalResponse(403, "Forbidden by Ziglang.\n", responseHeaders) catch unreachable;
         } else {
-            // Othewise, continue the originaol request.
+            // Otherwise, continue the original request.
             if (self.request_callout_id == callout_id) {
                 hostcalls.continueHttpRequest();
             } else {

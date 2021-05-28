@@ -50,13 +50,25 @@ extern "env" fn proxy_set_buffer_bytes(
     data_size: usize,
 ) enums.Status;
 
-pub fn setBufferBytes(buffer_type: enums.BufferType, start: usize, max_size: usize, data: []const u8) hostcallErrors!void {
+fn setBufferBytes(buffer_type: enums.BufferType, start: usize, max_size: usize, data: []const u8) hostcallErrors!void {
     switch (proxy_set_buffer_bytes(buffer_type, start, max_size, data.ptr, data.len)) {
         .Ok => {},
         .BadArgument => return hostcallErrors.BadArgument,
         .InvalidMemoryAccess => return hostcallErrors.InvalidMemoryAccess,
         else => unreachable,
     }
+}
+
+pub fn appendBufferBytes(buffer_type: enums.BufferType, data: []const u8) hostcallErrors!void {
+    try setBufferBytes(buffer_type, std.math.maxInt(usize), 0, data);
+}
+
+pub fn prependBufferBytes(buffer_type: enums.BufferType, data: []const u8) hostcallErrors!void {
+    try setBufferBytes(buffer_type, 0, 0, data);
+}
+
+pub fn replaceBufferBytes(buffer_type: enums.BufferType, data: []const u8) hostcallErrors!void {
+    try setBufferBytes(buffer_type, 0, std.math.maxInt(usize), data);
 }
 
 pub const WasmData = struct {

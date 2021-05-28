@@ -441,9 +441,9 @@ extern "env" fn proxy_send_local_response(
     status_code: u32,
     status_code_details_ptr: [*]const u8,
     status_code_details_size: usize,
-    body_ptr: *allowzero const u8,
+    body_ptr: [*]const u8,
     body_size: usize,
-    headers_buf_ptr: *allowzero const u8,
+    headers_buf_ptr: [*]const u8,
     headers_buf_size: usize,
     grpc_status: i32,
 ) enums.Status;
@@ -466,9 +466,9 @@ pub fn sendLocalResponse(
         status_code,
         undefined,
         0,
-        if (body != null) &body.?.ptr[0] else @intToPtr(*allowzero const u8, 0),
+        if (body != null) body.?.ptr else undefined,
         if (body != null) body.?.len else 0,
-        if (headers_buf != null) &headers_buf.?.ptr[0] else @intToPtr(*allowzero const u8, 0),
+        if (headers_buf != null) headers_buf.?.ptr else undefined,
         if (headers_buf != null) headers_buf.?.len else 0,
         -1,
     )) {

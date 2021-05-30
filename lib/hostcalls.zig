@@ -3,8 +3,6 @@ const allocator = @import("memory.zig").allocator;
 const state = @import("state.zig");
 const enums = @import("enums.zig");
 
-// TODO: Add doc and describe the ownership and allocation mechanism of hostcalls.
-
 /// hostcallErrors is a wrapper of erred enums.Status.
 pub const hostcallErrors = error{
     NotFound,
@@ -21,6 +19,7 @@ extern "env" fn proxy_log(
     usize,
 ) enums.Status;
 
+/// log emits a message with a given level to the host.
 pub fn log(level: enums.LogLevel, message: []const u8) hostcallErrors!void {
     switch (proxy_log(level, message.ptr, message.len)) {
         .Ok => {},
@@ -35,6 +34,7 @@ extern "env" fn proxy_set_tick_period_milliseconds(
     milliseconds: u32,
 ) enums.Status;
 
+/// setTickPeriod sets a interval of onTick functions being called for the current context.
 pub fn setTickPeriod(milliseconds: u32) void {
     switch (proxy_set_tick_period_milliseconds(milliseconds)) {
         .Ok => {},
@@ -59,18 +59,23 @@ fn setBufferBytes(buffer_type: enums.BufferType, start: usize, max_size: usize, 
     }
 }
 
+/// appendBufferBytes appends the given data to the buffer of a specificed buffer_type.
 pub fn appendBufferBytes(buffer_type: enums.BufferType, data: []const u8) hostcallErrors!void {
     try setBufferBytes(buffer_type, std.math.maxInt(usize), 0, data);
 }
 
+/// appendBufferBytes prepends the given data to the buffer of a specificed buffer_type.
 pub fn prependBufferBytes(buffer_type: enums.BufferType, data: []const u8) hostcallErrors!void {
     try setBufferBytes(buffer_type, 0, 0, data);
 }
 
+/// appendBufferBytes replaces the buffer of a specificed buffer_type with the given data.
 pub fn replaceBufferBytes(buffer_type: enums.BufferType, data: []const u8) hostcallErrors!void {
     try setBufferBytes(buffer_type, 0, std.math.maxInt(usize), data);
 }
 
+/// WasmData holds the byte data allocated by hosts. It is caller's responsibility to deallocate
+/// it by calling deinit.
 pub const WasmData = struct {
     const Self = @This();
     raw_data: []const u8,
@@ -87,6 +92,7 @@ extern "env" fn proxy_get_buffer_bytes(
     return_buffer_size: *usize,
 ) enums.Status;
 
+/// getBufferBytes returns a WasmData holding the bytes allocated by host for the given buffer_type.
 pub fn getBufferBytes(buffer_type: enums.BufferType, start: usize, max_size: usize) hostcallErrors!WasmData {
     var buf_ptr: [*]const u8 = undefined;
     var buf_len: usize = undefined;
@@ -99,14 +105,8 @@ pub fn getBufferBytes(buffer_type: enums.BufferType, start: usize, max_size: usi
     }
 }
 
-pub fn getPluginConfiguration(max_size: usize) hostcallErrors!WasmData {
-    return getBufferBytes(enums.BufferType.PluginConfiguration, 0, max_size);
-}
-
-pub fn getVmConfiguration(max_size: usize) hostcallErrors!WasmData {
-    return getBufferBytes(enums.BufferType.VmConfiguration, 0, max_size);
-}
-
+/// HeaderMap holds the headers map (e.g. request/response HTTP headers/trailers) which is allocated by
+/// hosts. It is caller's responsibility to deallocate this struct by calling deinit.
 pub const HeaderMap = struct {
     const Self = @This();
     map: std.StringHashMap([]const u8),
@@ -126,6 +126,7 @@ extern "env" fn proxy_get_header_map_pairs(
     return_buffer_size: *usize,
 ) enums.Status;
 
+/// getHeaderMap returns a HeaderMap holding the bytes allocated by host for the given map_type.
 pub fn getHeaderMap(map_type: enums.MapType) !HeaderMap {
     var buf_ptr: [*]const u8 = undefined;
     var buf_size: usize = undefined;
@@ -201,6 +202,7 @@ extern "env" fn proxy_set_header_map_pairs(
     size: usize,
 ) enums.Status;
 
+/// setHeaderMap *replaces* the underlying map in host with the given map.
 pub fn setHeaderMap(map_type: enums.MapType, map: std.StringHashMap([]const u8)) !void {
     const buf = try serializeHeaders(map);
     defer allocator.free(buf);
@@ -220,6 +222,7 @@ extern "env" fn proxy_get_header_map_value(
     return_value_size: *usize,
 ) enums.Status;
 
+/// getHeaderMapValue gets the value as WasmData of the given key in the map of map_type.
 pub fn getHeaderMapValue(map_type: enums.MapType, key: []const u8) hostcallErrors!WasmData {
     var value_ptr: [*]const u8 = undefined;
     var value_size: usize = undefined;
@@ -242,6 +245,7 @@ extern "env" fn proxy_replace_header_map_value(
     value_size: usize,
 ) enums.Status;
 
+/// replaceHeaderMapValue replaces the value of the given key in the map of map_type.
 pub fn replaceHeaderMapValue(map_type: enums.MapType, key: []const u8, value: []const u8) hostcallErrors!void {
     switch (proxy_replace_header_map_value(map_type, key.ptr, key.len, value.ptr, value.len)) {
         .Ok => {},
@@ -257,6 +261,7 @@ extern "env" fn proxy_remove_header_map_value(
     key_size: usize,
 ) enums.Status;
 
+/// replaceHeaderMapValue removes the value of the given key in the map of map_type.
 pub fn removeHeaderMapValue(map_type: enums.MapType, key: []const u8) hostcallErrors!void {
     switch (proxy_remove_header_map_value(map_type, key.ptr, key.len)) {
         .Ok => {},
@@ -274,6 +279,7 @@ extern "env" fn proxy_add_header_map_value(
     value_size: usize,
 ) enums.Status;
 
+/// replaceHeaderMapValue adds the value of the given key in the map of map_type.
 pub fn addHeaderMapValue(map_type: enums.MapType, key: []const u8, value: []const u8) hostcallErrors!void {
     switch (proxy_add_header_map_value(map_type, key.ptr, key.len, value.ptr, value.len)) {
         .Ok => {},
@@ -290,6 +296,7 @@ extern "env" fn proxy_get_property(
     return_size_size: *usize,
 ) enums.Status;
 
+/// getProperty gets the property as WasmData of the given path.
 pub fn getProperty(path: []const []const u8) !WasmData {
     if (path.len == 0) {
         return hostcallErrors.BadArgument;
@@ -331,6 +338,8 @@ extern "env" fn proxy_get_shared_data(
     return_cas: *u32,
 ) enums.Status;
 
+/// getSharedData gets the shared data as WasmData of the given key.
+///return_cas can be used for setting a value on the same key via setSharedData call.
 pub fn getSharedData(key: []const u8, return_cas: *u32) hostcallErrors!WasmData {
     var value_ptr: [*]const u8 = undefined;
     var value_size: usize = undefined;
@@ -352,6 +361,7 @@ extern "env" fn proxy_set_shared_data(
     cas: u32,
 ) enums.Status;
 
+/// setSharedData sets the shared data as WasmData of the given key and the data.
 pub fn setSharedData(key: []const u8, data: []const u8, cas: u32) hostcallErrors!void {
     switch (proxy_set_shared_data(key.ptr, key.len, data.ptr, data.len, cas)) {
         .Ok => {},

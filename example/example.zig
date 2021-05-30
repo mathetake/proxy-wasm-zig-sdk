@@ -85,7 +85,7 @@ const Root = struct {
 
         // Log the VM configuration.
         if (configuration_size > 0) {
-            var configuration = hostcalls.getVmConfiguration(configuration_size) catch unreachable;
+            var configuration = hostcalls.getBufferBytes(enums.BufferType.VmConfiguration, configuration_size) catch unreachable;
             defer configuration.deinit();
             const message = std.fmt.allocPrint(
                 allocator,
@@ -104,7 +104,7 @@ const Root = struct {
 
         // Get plugin configuration data.
         std.debug.assert(configuration_size > 0);
-        var plugin_config_data = hostcalls.getPluginConfiguration(configuration_size) catch unreachable;
+        var plugin_config_data = hostcalls.getBufferBytes(enums.BufferType.PluginConfiguration, configuration_size) catch unreachable;
         defer plugin_config_data.deinit();
 
         // Parse it to ConfigurationData struct.
@@ -830,7 +830,7 @@ const HttpRandomAuth = struct {
         var raw_body = hostcalls.getBufferBytes(enums.BufferType.HttpCallResponseBody, 0, body_size) catch unreachable;
         defer raw_body.deinit();
 
-        // Parse it to ConfigurationData struct.
+        // Parse it to httpbinUUIDResponseBody struct.
         comptime const httpbinUUIDResponseBody = struct { uuid: []const u8 };
         var stream = std.json.TokenStream.init(raw_body.raw_data);
         var body = std.json.parse(

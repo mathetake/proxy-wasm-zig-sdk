@@ -9,14 +9,20 @@ on:
 
 jobs:
   style:
-    name: Build
+    name: "Build (Zig version: ${{ matrix.zig-version }})"
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        zig-version: [
+          "beta", # Latest tagged release.
+          "edge"  # Latest build from Git master branch
+        ]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
       - name: Install Zig
-        run: sudo snap install zig --classic --beta
+        run: sudo snap install zig --classic --${{ matrix.zig-version }}
 
       - name: Build 
         run: zig build

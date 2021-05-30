@@ -3,8 +3,6 @@ const allocator = @import("memory.zig").allocator;
 const state = @import("state.zig");
 const enums = @import("enums.zig");
 
-// TODO: Add doc and describe the ownership and allocation mechanism of hostcalls.
-
 /// hostcallErrors is a wrapper of erred enums.Status.
 pub const hostcallErrors = error{
     NotFound,
@@ -21,6 +19,7 @@ extern "env" fn proxy_log(
     usize,
 ) enums.Status;
 
+/// log emits a message with a given level to the host.
 pub fn log(level: enums.LogLevel, message: []const u8) hostcallErrors!void {
     switch (proxy_log(level, message.ptr, message.len)) {
         .Ok => {},
@@ -35,6 +34,7 @@ extern "env" fn proxy_set_tick_period_milliseconds(
     milliseconds: u32,
 ) enums.Status;
 
+/// setTickPeriod sets the interval of onTick function being called for the current context.
 pub fn setTickPeriod(milliseconds: u32) void {
     switch (proxy_set_tick_period_milliseconds(milliseconds)) {
         .Ok => {},
@@ -59,18 +59,23 @@ fn setBufferBytes(buffer_type: enums.BufferType, start: usize, max_size: usize, 
     }
 }
 
+/// appendBufferBytes appends the given data to the buffer of a specificed buffer_type.
 pub fn appendBufferBytes(buffer_type: enums.BufferType, data: []const u8) hostcallErrors!void {
     try setBufferBytes(buffer_type, std.math.maxInt(usize), 0, data);
 }
 
+/// appendBufferBytes prepends the given data to the buffer of a specificed buffer_type.
 pub fn prependBufferBytes(buffer_type: enums.BufferType, data: []const u8) hostcallErrors!void {
     try setBufferBytes(buffer_type, 0, 0, data);
 }
 
+/// appendBufferBytes replaces the buffer of a specificed buffer_type with the given data.
 pub fn replaceBufferBytes(buffer_type: enums.BufferType, data: []const u8) hostcallErrors!void {
     try setBufferBytes(buffer_type, 0, std.math.maxInt(usize), data);
 }
 
+/// WasmData holds the byte data allocated by hosts. It is caller's responsibility to deallocate
+/// it by calling deinit.
 pub const WasmData = struct {
     const Self = @This();
     raw_data: []const u8,
@@ -87,6 +92,7 @@ extern "env" fn proxy_get_buffer_bytes(
     return_buffer_size: *usize,
 ) enums.Status;
 
+/// getBufferBytes returns a WasmData holding the bytes allocated by host for the given buffer_type.
 pub fn getBufferBytes(buffer_type: enums.BufferType, start: usize, max_size: usize) hostcallErrors!WasmData {
     var buf_ptr: [*]const u8 = undefined;
     var buf_len: usize = undefined;
@@ -99,14 +105,8 @@ pub fn getBufferBytes(buffer_type: enums.BufferType, start: usize, max_size: usi
     }
 }
 
-pub fn getPluginConfiguration(max_size: usize) hostcallErrors!WasmData {
-    return getBufferBytes(enums.BufferType.PluginConfiguration, 0, max_size);
-}
-
-pub fn getVmConfiguration(max_size: usize) hostcallErrors!WasmData {
-    return getBufferBytes(enums.BufferType.VmConfiguration, 0, max_size);
-}
-
+/// HeaderMap holds the headers map (e.g. request/response HTTP headers/trailers) which is allocated by
+/// hosts. It is caller's responsibility to deallocate this struct by calling deinit.
 pub const HeaderMap = struct {
     const Self = @This();
     map: std.StringHashMap([]const u8),
@@ -126,6 +126,7 @@ extern "env" fn proxy_get_header_map_pairs(
     return_buffer_size: *usize,
 ) enums.Status;
 
+/// getHeaderMap returns a HeaderMap holding the bytes allocated by host for the given map_type.
 pub fn getHeaderMap(map_type: enums.MapType) !HeaderMap {
     var buf_ptr: [*]const u8 = undefined;
     var buf_size: usize = undefined;
@@ -201,6 +202,7 @@ extern "env" fn proxy_set_header_map_pairs(
     size: usize,
 ) enums.Status;
 
+/// setHeaderMap *replaces* the underlying map in host with the given map.
 pub fn setHeaderMap(map_type: enums.MapType, map: std.StringHashMap([]const u8)) !void {
     const buf = try serializeHeaders(map);
     defer allocator.free(buf);
@@ -220,6 +222,7 @@ extern "env" fn proxy_get_header_map_value(
     return_value_size: *usize,
 ) enums.Status;
 
+/// getHeaderMapValue gets the value as WasmData of the given key in the map of map_type.
 pub fn getHeaderMapValue(map_type: enums.MapType, key: []const u8) hostcallErrors!WasmData {
     var value_ptr: [*]const u8 = undefined;
     var value_size: usize = undefined;
@@ -242,6 +245,7 @@ extern "env" fn proxy_replace_header_map_value(
     value_size: usize,
 ) enums.Status;
 
+/// replaceHeaderMapValue replaces the value of the given key in the map of map_type.
 pub fn replaceHeaderMapValue(map_type: enums.MapType, key: []const u8, value: []const u8) hostcallErrors!void {
     switch (proxy_replace_header_map_value(map_type, key.ptr, key.len, value.ptr, value.len)) {
         .Ok => {},
@@ -257,6 +261,7 @@ extern "env" fn proxy_remove_header_map_value(
     key_size: usize,
 ) enums.Status;
 
+/// replaceHeaderMapValue removes the value of the given key in the map of map_type.
 pub fn removeHeaderMapValue(map_type: enums.MapType, key: []const u8) hostcallErrors!void {
     switch (proxy_remove_header_map_value(map_type, key.ptr, key.len)) {
         .Ok => {},
@@ -274,6 +279,7 @@ extern "env" fn proxy_add_header_map_value(
     value_size: usize,
 ) enums.Status;
 
+/// replaceHeaderMapValue adds the value of the given key in the map of map_type.
 pub fn addHeaderMapValue(map_type: enums.MapType, key: []const u8, value: []const u8) hostcallErrors!void {
     switch (proxy_add_header_map_value(map_type, key.ptr, key.len, value.ptr, value.len)) {
         .Ok => {},
@@ -290,6 +296,7 @@ extern "env" fn proxy_get_property(
     return_size_size: *usize,
 ) enums.Status;
 
+/// getProperty gets the property as WasmData of the given path.
 pub fn getProperty(path: []const []const u8) !WasmData {
     if (path.len == 0) {
         return hostcallErrors.BadArgument;
@@ -331,6 +338,8 @@ extern "env" fn proxy_get_shared_data(
     return_cas: *u32,
 ) enums.Status;
 
+/// getSharedData gets the shared data as WasmData of the given key.
+/// return_cas can be used for setting a value on the same key via setSharedData call.
 pub fn getSharedData(key: []const u8, return_cas: *u32) hostcallErrors!WasmData {
     var value_ptr: [*]const u8 = undefined;
     var value_size: usize = undefined;
@@ -352,6 +361,7 @@ extern "env" fn proxy_set_shared_data(
     cas: u32,
 ) enums.Status;
 
+/// setSharedData sets the shared data as WasmData of the given key and the data.
 pub fn setSharedData(key: []const u8, data: []const u8, cas: u32) hostcallErrors!void {
     switch (proxy_set_shared_data(key.ptr, key.len, data.ptr, data.len, cas)) {
         .Ok => {},
@@ -369,6 +379,10 @@ extern "env" fn proxy_register_shared_queue(
     return_queue_id: *u32,
 ) enums.Status;
 
+/// registerSharedQueue registers the shared queue for the given name,
+/// and reutrns the quque ID for it.
+/// onQueueReady is called with the ID when an item is enqueued on this queue.
+/// Note that the queue ID is allocated per (vm_id, name).
 pub fn registerSharedQueue(name: []const u8) hostcallErrors!u32 {
     var queue_id: u32 = undefined;
     switch (proxy_register_shared_queue(name.ptr, name.len, &queue_id)) {
@@ -386,6 +400,8 @@ extern "env" fn proxy_resolve_shared_queue(
     return_queue_id: *u32,
 ) enums.Status;
 
+/// resolveSharedQueue returns the queue ID for the given vm_id and name.
+/// Note that the queue ID is allocated per (vm_id, name).
 pub fn resolveSharedQueue(vm_id: []const u8, name: []const u8) hostcallErrors!u32 {
     var queue_id: u32 = undefined;
     switch (proxy_resolve_shared_queue(vm_id.ptr, vm_id.len, name.ptr, name.len, &queue_id)) {
@@ -404,6 +420,7 @@ extern "env" fn proxy_dequeue_shared_queue(
     return_data_size: *usize,
 ) enums.Status;
 
+/// dequeueSharedQueue dequeues an item from the queue of queue_id.
 pub fn dequeueSharedQueue(queue_id: u32) hostcallErrors!WasmData {
     var data_ptr: [*]const u8 = undefined;
     var data_size: usize = undefined;
@@ -424,6 +441,7 @@ extern "env" fn proxy_enqueue_shared_queue(
     data_size: usize,
 ) enums.Status;
 
+/// enqueueSharedQueue enqueues an item to the queue of queue_id.
 pub fn enqueueSharedQueue(queue_id: u32, data: []const u8) hostcallErrors!void {
     switch (proxy_enqueue_shared_queue(queue_id, data.ptr, data.len)) {
         .Ok => {},
@@ -435,6 +453,8 @@ pub fn enqueueSharedQueue(queue_id: u32, data: []const u8) hostcallErrors!void {
 
 extern "env" fn proxy_continue_stream(stream_type: enums.StreamType) enums.Status;
 
+/// continueHttpRequest continues the HTTP request process of the current HTTP context.
+/// Available after Action.Pause is returend.
 pub fn continueHttpRequest() void {
     switch (proxy_continue_stream(enums.StreamType.Request)) {
         .Ok => {},
@@ -442,6 +462,8 @@ pub fn continueHttpRequest() void {
     }
 }
 
+/// continueHttpResponse continues the HTTP response process of the current HTTP context.
+/// Available after Action.Pause is returend.
 pub fn continueHttpResponse() void {
     switch (proxy_continue_stream(enums.StreamType.Response)) {
         .Ok => {},
@@ -460,6 +482,8 @@ extern "env" fn proxy_send_local_response(
     grpc_status: i32,
 ) enums.Status;
 
+/// sendLocalResponse sends the HTTP response with the given status, body and headers.
+/// Caller contexts must return Action.Pause after calling this.
 pub fn sendLocalResponse(
     status_code: u32,
     body: ?[]const u8,
@@ -503,6 +527,9 @@ extern "env" fn proxy_http_call(
     return_callout_id: *u32,
 ) enums.Status;
 
+/// dispatchHttpCall dispatches a HTTP call with the given attributes to the cluster.
+/// Returns a callout ID, and the onHttpCalloutResponse is called with that ID,
+/// when hosts receives the response to that dipached request.
 pub fn dispatchHttpCall(
     cluster: []const u8,
     headers: ?std.StringHashMap([]const u8),
@@ -555,6 +582,7 @@ pub fn dispatchHttpCall(
 
 extern "env" fn proxy_set_effective_context(context_id: u32) enums.Status;
 
+/// setEffectiveContext is used only in the SDK internally.
 pub fn setEffectiveContext(context_id: u32) void {
     switch (proxy_set_effective_context(context_id)) {
         .Ok => {},
@@ -571,6 +599,8 @@ pub fn done() void {
     }
 }
 
+/// defineMetric defines/resolves the metric ID for the given name and metric_type.
+/// Returns the metric ID which can be used for {get,increment,record}Metric calls.
 extern "env" fn proxy_define_metric(
     metric_type: enums.MetricType,
     name_ptr: [*]const u8,
@@ -593,6 +623,7 @@ extern "env" fn proxy_get_metric(
     return_value: *u64,
 ) enums.Status;
 
+/// getMetric returns the metric value for the given metric ID.
 pub fn getMetric(metric_id: u32) hostcallErrors!u64 {
     var value: u64 = undefined;
     switch (proxy_get_metric(metric_id, &value)) {
@@ -604,13 +635,14 @@ pub fn getMetric(metric_id: u32) hostcallErrors!u64 {
     }
 }
 
-extern "env" fn proxy_record_metric(
+extern "env" fn proxy_increment_metric(
     metric_id: u32,
-    value: u64,
+    offset: i64,
 ) enums.Status;
 
-pub fn recordMetric(metric_id: u32, value: u64) hostcallErrors!void {
-    switch (proxy_record_metric(metric_id, value)) {
+/// incrementMetric increments the metric for the given metric ID with the offset.
+pub fn incrementMetric(metric_id: u32, offset: i64) hostcallErrors!void {
+    switch (proxy_increment_metric(metric_id, offset)) {
         .Ok => {},
         .NotFound => return hostcallErrors.NotFound,
         .BadArgument => return hostcallErrors.BadArgument,
@@ -618,13 +650,14 @@ pub fn recordMetric(metric_id: u32, value: u64) hostcallErrors!void {
     }
 }
 
-extern "env" fn proxy_increment_metric(
+extern "env" fn proxy_record_metric(
     metric_id: u32,
-    offset: i64,
+    value: u64,
 ) enums.Status;
 
-pub fn incrementMetric(metric_id: u32, offset: i64) hostcallErrors!void {
-    switch (proxy_increment_metric(metric_id, offset)) {
+/// recordMetric records the metric for the given metric ID with the value.
+pub fn recordMetric(metric_id: u32, value: u64) hostcallErrors!void {
+    switch (proxy_record_metric(metric_id, value)) {
         .Ok => {},
         .NotFound => return hostcallErrors.NotFound,
         .BadArgument => return hostcallErrors.BadArgument,

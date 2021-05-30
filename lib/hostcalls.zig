@@ -339,7 +339,7 @@ extern "env" fn proxy_get_shared_data(
 ) enums.Status;
 
 /// getSharedData gets the shared data as WasmData of the given key.
-///return_cas can be used for setting a value on the same key via setSharedData call.
+/// return_cas can be used for setting a value on the same key via setSharedData call.
 pub fn getSharedData(key: []const u8, return_cas: *u32) hostcallErrors!WasmData {
     var value_ptr: [*]const u8 = undefined;
     var value_size: usize = undefined;

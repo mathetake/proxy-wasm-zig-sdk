@@ -85,7 +85,7 @@ const Root = struct {
 
         // Log the VM configuration.
         if (configuration_size > 0) {
-            var configuration = hostcalls.getBufferBytes(enums.BufferType.VmConfiguration, configuration_size) catch unreachable;
+            var configuration = hostcalls.getBufferBytes(enums.BufferType.VmConfiguration, 0, configuration_size) catch unreachable;
             defer configuration.deinit();
             const message = std.fmt.allocPrint(
                 allocator,
@@ -104,7 +104,7 @@ const Root = struct {
 
         // Get plugin configuration data.
         std.debug.assert(configuration_size > 0);
-        var plugin_config_data = hostcalls.getBufferBytes(enums.BufferType.PluginConfiguration, configuration_size) catch unreachable;
+        var plugin_config_data = hostcalls.getBufferBytes(enums.BufferType.PluginConfiguration, 0, configuration_size) catch unreachable;
         defer plugin_config_data.deinit();
 
         // Parse it to ConfigurationData struct.

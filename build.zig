@@ -11,7 +11,7 @@ pub fn build(b: *Builder) void {
     };
 
     for (examples) |example| {
-        const lib = b.addStaticLibrary(example[0], example[1]);
+        const lib = b.addSharedLibrary(example[0], example[1], b.version(1,0,0));
         lib.setBuildMode(mode);
         lib.setTarget(.{ .cpu_arch = .wasm32, .os_tag = .wasi });
         lib.install();

@@ -263,7 +263,7 @@ const Root = struct {
 
         // Record a cryptographically secure random value on the gauge.
         var buf: [8]u8 = undefined;
-        std.crypto.randomBytes(buf[0..]) catch unreachable;
+        std.crypto.random.bytes(buf[0..]);
         hostcalls.recordMetric(self.random_gauge_metric_id.?, std.mem.readIntLittle(u64, buf[0..])) catch unreachable;
 
         // Insert the random value to the shared key value store.
@@ -726,7 +726,7 @@ const HttpBodyOperation = struct {
             const message = std.fmt.allocPrint(
                 allocator,
                 "response body sha256 (original size={d}) : {x}",
-                .{ self.total_response_body_size, checksum },
+                .{ self.total_response_body_size, std.fmt.fmtSliceHexLower(checksum[0..]) },
             ) catch unreachable;
             defer allocator.free(message);
             hostcalls.log(enums.LogLevel.Info, message) catch unreachable;

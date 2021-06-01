@@ -6,6 +6,8 @@ See [example](example) for the demonstration.
 
 ## Build
 
+This requires the latest nightly 0.8.0 of Zig.
+
 ```bash
 zig build
 ```

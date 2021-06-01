@@ -14,7 +14,8 @@ jobs:
     strategy:
       matrix:
         zig-version: [
-          "beta", # Latest tagged release.
+          # TODO: enable once 0.8.0 is released.
+          # "beta", # Latest tagged release.
           "edge"  # Latest build from Git master branch
         ]
     steps:

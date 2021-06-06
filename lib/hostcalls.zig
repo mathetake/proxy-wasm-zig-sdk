@@ -162,7 +162,7 @@ fn serializeHeaders(map: std.StringHashMap([]const u8)) ![]const u8 {
     var size: usize = 4;
     var iter = map.iterator();
     while (iter.next()) |header| {
-        size += header.key.len + header.value.len + 10;
+        size += header.key_ptr.len + header.value_ptr.len + 10;
     }
     var buf = try allocator.alloc(u8, size);
 
@@ -173,8 +173,8 @@ fn serializeHeaders(map: std.StringHashMap([]const u8)) ![]const u8 {
     var base: usize = 4;
     iter = map.iterator();
     while (iter.next()) |header| {
-        std.mem.writeIntSliceLittle(usize, buf[base .. base + 4], header.key.len);
-        std.mem.writeIntSliceLittle(usize, buf[base + 4 .. base + 8], header.value.len);
+        std.mem.writeIntSliceLittle(usize, buf[base .. base + 4], header.key_ptr.len);
+        std.mem.writeIntSliceLittle(usize, buf[base + 4 .. base + 8], header.value_ptr.len);
         base += 8;
     }
 
@@ -182,13 +182,13 @@ fn serializeHeaders(map: std.StringHashMap([]const u8)) ![]const u8 {
     iter = map.iterator();
     while (iter.next()) |header| {
         // Copy key.
-        std.mem.copy(u8, buf[base..], header.key);
-        base += header.key.len;
+        std.mem.copy(u8, buf[base..], header.key_ptr.*);
+        base += header.key_ptr.len;
         buf[base] = 0;
         base += 1;
         // Copy value.
-        std.mem.copy(u8, buf[base..], header.value);
-        base += header.value.len;
+        std.mem.copy(u8, buf[base..], header.value_ptr.*);
+        base += header.value_ptr.len;
         buf[base] = 0;
         base += 1;
     }

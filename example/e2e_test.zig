@@ -34,9 +34,8 @@ fn runAndWaitEnvoyStarted() !*std.ChildProcess {
     const envoy = try std.ChildProcess.init(argv[0..], allocator);
 
     envoy.stdin_behavior = .Ignore;
-    envoy.stdout_behavior = .Pipe;
+    envoy.stdout_behavior = .Ignore;
     envoy.stderr_behavior = .Pipe;
-    envoy.expand_arg0 = .no_expand;
 
     // Run the process
     try envoy.spawn();
@@ -45,13 +44,13 @@ fn runAndWaitEnvoyStarted() !*std.ChildProcess {
     errdefer _ = envoy.kill() catch unreachable;
 
     // Check endpoints are healthy.
-    for ([_][]const u8{"localhost:18000"}) |endpoint| {
+    for ([_][]const u8{ "localhost:8001", "localhost:18000", "localhost:18001", "localhost:18002" }) |endpoint| {
         var i: usize = 0;
         while (i < 100) {
             std.time.sleep(std.time.ns_per_ms * 100);
 
             // Exec curl (TODO: After Http client is supported in stdlib, then use it here and elsewhere in this file.)
-            const argv2 = [_][]const u8{ "curl", "-s", "--head", "localhost:18000" };
+            const argv2 = [_][]const u8{ "curl", "-s", "--head", endpoint };
             const res = try std.ChildProcess.exec(.{ .allocator = allocator, .argv = argv2[0..] });
             defer allocator.free(res.stdout);
             defer allocator.free(res.stderr);

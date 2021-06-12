@@ -15,7 +15,7 @@ zig build
 
 ## Run example with Envoyproxy
 
-This requires the Envoy proxy binary in your PATH.
+This requires the `envoy` in your PATH.
 
 ```
 envoy -c example/envoy.yaml
@@ -23,7 +23,7 @@ envoy -c example/envoy.yaml
 
 ## Run end-to-end test with Envoyproxy
 
-This requires the Envoy proxy binary in your PATH.
+This requires the `envoy` and `curl` in your PATH.
 
 ```
 zig build e2e

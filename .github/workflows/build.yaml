@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         zig-version: [ "beta" ]
-        envoy-version: [ "1.18.3", "1.17.3" ]
+        envoy-version: [ "1.18.3" ]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -26,12 +26,6 @@ jobs:
         run: zig build
 
       # https://github.community/t/using-strategy-matrix-values-in-the-specification-of-actions-to-be-used-in-a-workflow/16706
-      - name: Install Envoy
-        if: matrix.envoy-version == '1.17.3'
-        uses: docker://envoyproxy/envoy:v1.17.3
-        with:
-          entrypoint: cp
-          args: /usr/local/bin/envoy .
       - name: Install Envoy
         if: matrix.envoy-version == '1.18.3'
         uses: docker://envoyproxy/envoy:v1.18.3

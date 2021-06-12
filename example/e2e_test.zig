@@ -3,6 +3,10 @@ const debug = std.debug;
 const assert = debug.assert;
 const allocator = std.heap.page_allocator;
 
+const E2EError = error{
+    EnvoyUnhealthy,
+};
+
 fn printFileReader(reader: std.fs.File.Reader) !void {
     while (try reader.readUntilDelimiterOrEofAlloc(allocator, '\n', 50 * 1024)) |line| {
         defer allocator.free(line);
@@ -37,16 +41,15 @@ fn runAndWaitEnvoyStarted() !*std.ChildProcess {
     envoy.stdout_behavior = .Ignore;
     envoy.stderr_behavior = .Pipe;
 
-    // Run the process
+    // Run the process.
     try envoy.spawn();
-    std.time.sleep(std.time.ns_per_ms * 1000);
-    errdefer printFileReader(envoy.stderr.?.reader()) catch unreachable;
     errdefer _ = envoy.kill() catch unreachable;
+    errdefer printFileReader(envoy.stderr.?.reader()) catch unreachable;
 
     // Check endpoints are healthy.
     for ([_][]const u8{ "localhost:8001", "localhost:18000", "localhost:18001", "localhost:18002" }) |endpoint| {
         var i: usize = 0;
-        while (i < 100) {
+        while (i < 10) : (i += 1) {
             std.time.sleep(std.time.ns_per_ms * 100);
 
             // Exec curl (TODO: After Http client is supported in stdlib, then use it here and elsewhere in this file.)
@@ -54,15 +57,14 @@ fn runAndWaitEnvoyStarted() !*std.ChildProcess {
             const res = try std.ChildProcess.exec(.{ .allocator = allocator, .argv = argv2[0..] });
             defer allocator.free(res.stdout);
             defer allocator.free(res.stderr);
-
             // If OK, then break.
             if (std.mem.indexOf(u8, res.stdout, "HTTP/1.1 200 OK") != null)
                 break;
         }
 
         // Envoy not healthy.
-        if (i == 100) {
-            std.debug.panic("endpoint {s} not healthy", .{endpoint});
+        if (i == 10) {
+            return E2EError.EnvoyUnhealthy;
         }
     }
     return envoy;

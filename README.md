@@ -6,7 +6,7 @@ See [example](example) for the demonstration.
 
 ## Build
 
-This requires the latest nightly 0.8.0 of Zig.
+This requires the latest tagged release of Zig.
 
 ```bash
 zig build
@@ -15,10 +15,19 @@ zig build
 
 ## Run example with Envoyproxy
 
+This requires the `envoy` in your PATH.
+
 ```
 envoy -c example/envoy.yaml
 ```
 
+## Run end-to-end test with Envoyproxy
+
+This requires the `envoy` and `curl` in your PATH.
+
+```
+zig build e2e
+```
 
 ## References
 - Envoyproxy: https://www.envoyproxy.io/

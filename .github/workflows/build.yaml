@@ -29,7 +29,12 @@ jobs:
 
       - name: Install Envoy
         uses: docker://envoyproxy/envoy:v1.18.3
-        run: mkdir -p $(pwd)/bin && copy $(which envoy) $(pwd)/bin
+        with:
+          entrypoint: cp
+          args: /usr/local/bin/envoy .
 
       - name: Run End-to-End test
-        run: export PATH=$(pwd)/bin:$PATH && build e2e
+        run: |
+          export PATH=$(pwd):$PATH
+          envoy --version
+          zig build e2e

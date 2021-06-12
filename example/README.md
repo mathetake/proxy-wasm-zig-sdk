@@ -66,7 +66,7 @@ this is my body
 
 # With "sha256-response" in the path, the sha256 of the response body from the upstream is received.
 $ curl 'localhost:18001/stats?sha256-response'
-response body sha256: 32d98f08ee6d0d63ad5156c471f304c45cc71be9ce43b3fdb4ee4b80e41f4307
+response body sha256 32d98f08ee6d0d63ad5156c471f304c45cc71be9ce43b3fdb4ee4b80e41f4307
 ```
 
 ### localhost:18002

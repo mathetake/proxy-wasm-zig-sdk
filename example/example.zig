@@ -539,10 +539,11 @@ const HttpHeaderOperation = struct {
             // Return the tick counter's value in the response header if :path contains "tick-count".
             const tick_count = hostcalls.getMetric(self.tick_counter_metric_id) catch unreachable;
             // Cast the u64 to the string.
-            var buffer: [20]u8 = undefined;
-            _ = std.fmt.bufPrintIntToSlice(buffer[0..], tick_count, 10, false, .{});
+            var buf: [20]u8 = undefined;
+            var fbs = std.io.fixedBufferStream(&buf);
+            std.fmt.formatIntValue(tick_count, "", .{}, fbs.writer()) catch unreachable;
             // Set the stringed value in response headers.
-            hostcalls.addHeaderMapValue(enums.MapType.HttpResponseHeaders, "current-tick-count", buffer[0..]) catch unreachable;
+            hostcalls.addHeaderMapValue(enums.MapType.HttpResponseHeaders, "current-tick-count", fbs.getWritten()) catch unreachable;
         } else if (std.mem.indexOf(u8, self.request_path.raw_data, "shared-random-value")) |_| {
             // Insert the random value in the shared data in a response header if :path contains "shared-random-value".
             var cas: u32 = undefined;

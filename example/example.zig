@@ -457,7 +457,7 @@ const HttpHeaderOperation = struct {
             const message = std.fmt.allocPrint(
                 allocator,
                 "request header: --> key: {s}, value: {s} ",
-                .{ entry.key_ptr, entry.value_ptr },
+                .{ entry.key_ptr.*, entry.value_ptr.* },
             ) catch unreachable;
             defer allocator.free(message);
             hostcalls.log(enums.LogLevel.Info, message) catch unreachable;
@@ -497,7 +497,7 @@ const HttpHeaderOperation = struct {
             const message = std.fmt.allocPrint(
                 allocator,
                 "request trailer: --> key: {s}, value: {s} ",
-                .{ entry.key_ptr, entry.value_ptr },
+                .{ entry.key_ptr.*, entry.value_ptr.* },
             ) catch unreachable;
             defer allocator.free(message);
             hostcalls.log(enums.LogLevel.Info, message) catch unreachable;
@@ -519,7 +519,7 @@ const HttpHeaderOperation = struct {
             const message = std.fmt.allocPrint(
                 allocator,
                 "response header: <-- key: {s}, value: {s} ",
-                .{ entry.key_ptr, entry.value_ptr },
+                .{ entry.key_ptr.*, entry.value_ptr.* },
             ) catch unreachable;
             defer allocator.free(message);
             hostcalls.log(enums.LogLevel.Info, message) catch unreachable;
@@ -571,7 +571,7 @@ const HttpHeaderOperation = struct {
             const message = std.fmt.allocPrint(
                 allocator,
                 "response trailer: <--- key: {s}, value: {s} ",
-                .{ entry.key_ptr, entry.value_ptr },
+                .{ entry.key_ptr.*, entry.value_ptr.* },
             ) catch unreachable;
             defer allocator.free(message);
             hostcalls.log(enums.LogLevel.Info, message) catch unreachable;
@@ -605,7 +605,7 @@ const HttpHeaderOperation = struct {
                 const message = std.fmt.allocPrint(
                     allocator,
                     "request header on log: --> key: {s}, value: {s} ",
-                    .{ entry.key_ptr, entry.value_ptr },
+                    .{ entry.key_ptr.*, entry.value_ptr.* },
                 ) catch unreachable;
                 defer allocator.free(message);
                 hostcalls.log(enums.LogLevel.Info, message) catch unreachable;
@@ -615,7 +615,7 @@ const HttpHeaderOperation = struct {
                 const message = std.fmt.allocPrint(
                     allocator,
                     "response header on log: <-- key: {s}, value: {s} ",
-                    .{ entry.key_ptr, entry.value_ptr },
+                    .{ entry.key_ptr.*, entry.value_ptr.* },
                 ) catch unreachable;
                 defer allocator.free(message);
                 hostcalls.log(enums.LogLevel.Info, message) catch unreachable;

@@ -15,7 +15,7 @@ jobs:
       matrix:
         zig-version: [
           "beta", # Latest tagged release.
-          "edge"  # Latest build from Git master branch
+          # "edge"  # Latest build from Git master branch
         ]
     steps:
       - name: Checkout
@@ -24,5 +24,8 @@ jobs:
       - name: Install Zig
         run: sudo snap install zig --classic --${{ matrix.zig-version }}
 
-      - name: Build 
+      - name: Build
         run: zig build
+
+      - name: Run End-to-End test
+        run: zig build e2e

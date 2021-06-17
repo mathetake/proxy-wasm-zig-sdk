@@ -1,7 +1,7 @@
 const std = @import("std");
+const allocator = std.heap.page_allocator;
 const debug = std.debug;
 const assert = debug.assert;
-const allocator = std.heap.page_allocator;
 
 test "Run End-to-End test with Envoy proxy" {
     try requireWasmBinary();
@@ -12,11 +12,10 @@ test "Run End-to-End test with Envoy proxy" {
     try requireHttpBodyOperations();
     try requireHttpRandomAuth();
     try requireTcpDataSizeCounter();
+    try requireEnvoyLogs(envoy);
 }
 
-const E2EError = error{
-    EnvoyUnhealthy,
-};
+const E2EError = error{RequiredStringNotFound};
 
 fn requireWasmBinary() !void {
     const cwd = try std.process.getCwdAlloc(allocator);
@@ -68,9 +67,14 @@ fn requireRunAndWaitEnvoyStarted() !*std.ChildProcess {
 }
 
 fn printFileReader(reader: std.fs.File.Reader) !void {
-    while (try reader.readUntilDelimiterOrEofAlloc(allocator, '\n', 50 * 1024)) |line| {
-        defer allocator.free(line);
-        debug.print("{s}\n", .{line});
+    // TODO: this assumes that the reader continue emitting logs so that we wouldn't be blocked.
+    // Use thread or async call (polling) equivalent so we won't be in deadlock in anycase.
+    var timer = try std.time.Timer.start();
+    while (timer.read() / std.time.ns_per_s < 10) {
+        if (try reader.readUntilDelimiterOrEofAlloc(allocator, '\n', 50 * 1024)) |line| {
+            defer allocator.free(line);
+            debug.print("{s}\n", .{line});
+        }
     }
 }
 
@@ -92,7 +96,7 @@ fn requireExecStdout(comptime intervalInNanoSec: u64, comptime maxRetry: u64, ar
     }
 
     if (i == maxRetry) {
-        return E2EError.EnvoyUnhealthy;
+        return E2EError.RequiredStringNotFound;
     }
 }
 
@@ -174,5 +178,42 @@ fn requireTcpDataSizeCounter() !void {
         const argv = [_][]const u8{ "curl", "localhost:8001/stats" };
         const exps = [_][]const u8{"zig_sdk_tcp_total_data_size:"};
         try requireExecStdout(std.time.ns_per_ms * 100, 50, argv[0..], exps[0..]);
+    }
+}
+
+fn requireEnvoyLogs(envoy: *std.ChildProcess) !void {
+    const exps = [_][]const u8{
+        "wasm log http-header-operation ziglang_vm: plugin configuration: root=\"\", http=\"header-operation\", stream=\"\"",
+        "wasm log http-body-operation ziglang_vm: plugin configuration: root=\"\", http=\"body-operation\", stream=\"\"",
+        "wasm log tcp-total-data-size-counter ziglang_vm: plugin configuration: root=\"\", http=\"\", stream=\"total-data-size-counter\"",
+        "wasm log http-header-operation ziglang_vm: request header: --> key: :method, value: HEAD",
+        "wasm log http-body-operation ziglang_vm: response body sha256 (original size=",
+        "wasm log http-random-auth ziglang_vm: uuid=",
+        "wasm log tcp-total-data-size-counter ziglang_vm: upstream connection for peer at",
+        "wasm log tcp-total-data-size-counter ziglang_vm: deleting tcp context",
+        "wasm log singleton ziglang_vm: on tick called at",
+        "wasm log singleton ziglang_vm: user-agent curl/",
+    };
+
+    // Collect stderr until timeout
+    // TODO: this assumes that the Envoy continue emitting logs so that we wouldn't be blocked.
+    // Use thread or async call (polling) equivalent so we won't be in deadlock in anycase.
+    const reader = envoy.stderr.?.reader();
+    var stderr = std.ArrayList(u8).init(allocator);
+    defer stderr.deinit();
+    var timer = try std.time.Timer.start();
+    while (timer.read() / std.time.ns_per_s < 10) {
+        if (try reader.readUntilDelimiterOrEofAlloc(allocator, '\n', 50 * 1024)) |line| {
+            defer allocator.free(line);
+            try stderr.appendSlice(line);
+        }
+    }
+
+    // Check logs.
+    for (exps) |exp| {
+        debug.print("Checking '{s}' in Envoy logs..\n", .{exp});
+        if (std.mem.indexOf(u8, stderr.items, exp) == null) {
+            return E2EError.RequiredStringNotFound;
+        }
     }
 }

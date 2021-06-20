@@ -202,8 +202,8 @@ extern "env" fn proxy_set_header_map_pairs(
     size: usize,
 ) enums.Status;
 
-/// setHeaderMap *replaces* the underlying map in host with the given map.
-pub fn setHeaderMap(map_type: enums.MapType, map: std.StringHashMap([]const u8)) !void {
+/// replaceHeaderMap *replaces* the underlying map in host with the given map.
+pub fn replaceHeaderMap(map_type: enums.MapType, map: std.StringHashMap([]const u8)) !void {
     const buf = try serializeHeaders(map);
     defer allocator.free(buf);
     switch (proxy_set_header_map_pairs(map_type, buf.ptr, buf.len)) {

@@ -529,7 +529,7 @@ const HttpHeaderOperation = struct {
             // Perform set_header_map and proxy_add_header_map_value
             // when the request :path contains "response-headers".
             headers.map.put("proxy-wasm", "zig-sdk") catch unreachable;
-            hostcalls.setHeaderMap(enums.MapType.HttpResponseHeaders, headers.map) catch unreachable;
+            hostcalls.replaceHeaderMap(enums.MapType.HttpResponseHeaders, headers.map) catch unreachable;
             hostcalls.addHeaderMapValue(enums.MapType.HttpResponseHeaders, "cache-control", " zig-original") catch unreachable;
         } else if (std.mem.indexOf(u8, self.request_path.raw_data, "force-500")) |_| {
             // Forcibly reutrn 500 status if :path contains "force-500" and remove "cache-control" header.

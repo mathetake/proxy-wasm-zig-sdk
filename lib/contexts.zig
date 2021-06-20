@@ -27,7 +27,7 @@ pub const RootContext = struct {
     /// onDelete is called when the host is deleting this context.
     onDeleteImpl: ?fn (self: *Self) void = null,
 
-    /// newTcpContext is used for creating HttpContext for http filters.
+    /// newHttpContext is used for creating HttpContext for http filters.
     /// Return null to indicate this RootContext is not for HTTP streams.
     /// Deallocation of contexts created here should only be performed in HttpContext.onDelete.
     newHttpContextImpl: ?fn (self: *Self, context_id: u32) ?*HttpContext = null,
@@ -42,9 +42,8 @@ pub const RootContext = struct {
     /// the queue is empty during onQueueReady.
     onQueueReadyImpl: ?fn (self: *Self, quque_id: u32) void = null,
 
-    /// onQueueReady is called when the queue is ready after calling hostcalls.RegisterQueue.
-    /// Note that the queue is dequeued by another VM running in another thread, so possibly
-    /// the queue is empty during onQueueReady.
+    /// onTick is called when the queue is called when SetTickPeriod hostcall
+    /// is called by this root context.
     onTickImpl: ?fn (self: *Self) void = null,
 
     /// onHttpCalloutResponse is called when a dispatched http call by hostcalls.dispatchHttpCall

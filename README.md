@@ -6,7 +6,7 @@ See [example](example) for the demonstration.
 
 ## Build
 
-This requires the latest tagged release of Zig.
+This requires the nightly Zig.
 
 ```bash
 zig build

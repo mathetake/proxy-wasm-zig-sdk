@@ -21,6 +21,7 @@ export fn _initialize() void {
 // newRootContext is used for creating root contexts for
 // each plugin configuration (i.e. config.configuration field in envoy.yaml).
 fn newRootContext(context_id: usize) *contexts.RootContext {
+    _ = context_id;
     var context: *Root = allocator.create(Root) catch unreachable;
     context.init();
     return &context.root_context;
@@ -81,7 +82,7 @@ const Root = struct {
 
     // Implement contexts.RootContext.onVmStart.
     fn onVmStart(root_context: *contexts.RootContext, configuration_size: usize) bool {
-        const self: *Self = @fieldParentPtr(Self, "root_context", root_context);
+        _ = @fieldParentPtr(Self, "root_context", root_context);
 
         // Log the VM configuration.
         if (configuration_size > 0) {
@@ -222,6 +223,7 @@ const Root = struct {
 
     // Implement contexts.RootContext.onTick.
     fn onQueueReady(root_context: *contexts.RootContext, quque_id: u32) void {
+        _ = root_context;
         // We know that this is called for user-agents queue since that's the only queue we registered.
 
         // Since we are in a singleton, we can assume that this Wasm VM is the only VM to dequeue this queue.
@@ -317,7 +319,8 @@ const TcpTotalDataSizeCounter = struct {
 
     // Implement contexts.TcpContext.onDownstreamData.
     fn onDownstreamData(tcp_context: *contexts.TcpContext, data_size: usize, end_of_stream: bool) enums.Action {
-        const self: *Self = @fieldParentPtr(Self, "tcp_context", tcp_context);
+        _ = end_of_stream;
+        const self = @fieldParentPtr(Self, "tcp_context", tcp_context);
 
         // Increment the total data size counter.
         if (data_size > 0) {
@@ -328,7 +331,8 @@ const TcpTotalDataSizeCounter = struct {
 
     // Implement contexts.TcpContext.onDownstreamClose.
     fn onDownstreamClose(tcp_context: *contexts.TcpContext, peer_type: enums.PeerType) void {
-        const self: *Self = @fieldParentPtr(Self, "tcp_context", tcp_context);
+        _ = @fieldParentPtr(Self, "tcp_context", tcp_context);
+        _ = peer_type;
 
         // Get source addess of this connection.
         const path: [2][]const u8 = [2][]const u8{ "source", "address" };
@@ -348,6 +352,7 @@ const TcpTotalDataSizeCounter = struct {
     // Implement contexts.TcpContext.onUpstreamData.
     fn onUpstreamData(tcp_context: *contexts.TcpContext, data_size: usize, end_of_stream: bool) enums.Action {
         const self: *Self = @fieldParentPtr(Self, "tcp_context", tcp_context);
+        _ = end_of_stream;
 
         // Increment the total data size counter.
         if (data_size > 0) {
@@ -358,7 +363,8 @@ const TcpTotalDataSizeCounter = struct {
 
     // Implement contexts.TcpContext.onUpstreamClose.
     fn onUpstreamClose(tcp_context: *contexts.TcpContext, peer_type: enums.PeerType) void {
-        const self: *Self = @fieldParentPtr(Self, "tcp_context", tcp_context);
+        _ = @fieldParentPtr(Self, "tcp_context", tcp_context);
+        _ = peer_type;
 
         // Get source addess of this connection.
         const path: [2][]const u8 = [2][]const u8{ "upstream", "address" };
@@ -445,6 +451,8 @@ const HttpHeaderOperation = struct {
 
     // Implement contexts.HttpContext.onHttpRequestHeaders.
     fn onHttpRequestHeaders(http_context: *contexts.HttpContext, num_headers: usize, end_of_stream: bool) enums.Action {
+        _ = num_headers;
+        _ = end_of_stream;
         const self: *Self = @fieldParentPtr(Self, "http_context", http_context);
 
         // Get request headers.
@@ -489,6 +497,9 @@ const HttpHeaderOperation = struct {
 
     // Implement contexts.HttpContext.onHttpRequestTrailers.
     fn onHttpRequestTrailers(http_context: *contexts.HttpContext, num_trailers: usize) enums.Action {
+        _ = http_context;
+        _ = num_trailers;
+
         // Log request trailers.
         var headers: hostcalls.HeaderMap = hostcalls.getHeaderMap(enums.MapType.HttpRequestTrailers) catch unreachable;
         defer headers.deinit();
@@ -507,6 +518,8 @@ const HttpHeaderOperation = struct {
 
     // Implement contexts.HttpContext.onHttpResponseHeaders.
     fn onHttpResponseHeaders(http_context: *contexts.HttpContext, num_headers: usize, end_of_stream: bool) enums.Action {
+        _ = num_headers;
+        _ = end_of_stream;
         const self: *Self = @fieldParentPtr(Self, "http_context", http_context);
 
         // Get response headers.
@@ -555,7 +568,7 @@ const HttpHeaderOperation = struct {
             // Read the random value as u64 and format it as string.
             const value: u64 = std.mem.readIntSliceLittle(u64, data.raw_data);
             var buffer: [20]u8 = undefined;
-            _ = std.fmt.bufPrintIntToSlice(buffer[0..], value, 10, false, .{});
+            _ = std.fmt.bufPrintIntToSlice(buffer[0..], value, 10, .lower, .{});
             // Put it in the header.
             hostcalls.addHeaderMapValue(enums.MapType.HttpResponseHeaders, "shared-random-value", buffer[0..]) catch unreachable;
         }
@@ -564,6 +577,9 @@ const HttpHeaderOperation = struct {
 
     // Implement contexts.HttpContext.onHttpResponseTrailers.
     fn onHttpResponseTrailers(http_context: *contexts.HttpContext, num_trailers: usize) enums.Action {
+        _ = http_context;
+        _ = num_trailers;
+
         // Log response trailers.
         var headers: hostcalls.HeaderMap = hostcalls.getHeaderMap(enums.MapType.HttpResponseTrailers) catch unreachable;
         defer headers.deinit();
@@ -661,6 +677,8 @@ const HttpBodyOperation = struct {
 
     // Implement contexts.HttpContext.onHttpRequestHeaders.
     fn onHttpRequestHeaders(http_context: *contexts.HttpContext, num_headers: usize, end_of_stream: bool) enums.Action {
+        _ = num_headers;
+        _ = end_of_stream;
         const self: *Self = @fieldParentPtr(Self, "http_context", http_context);
 
         // Get the :path header value.
@@ -694,6 +712,8 @@ const HttpBodyOperation = struct {
 
     // Implement contexts.HttpContext.onHttpResponseHeaders.
     fn onHttpResponseHeaders(http_context: *contexts.HttpContext, num_headers: usize, end_of_stream: bool) enums.Action {
+        _ = num_headers;
+        _ = end_of_stream;
         const self: *Self = @fieldParentPtr(Self, "http_context", http_context);
 
         // Remove Content-Length header if sha256-response, otherwise client breaks because we change the response.
@@ -773,6 +793,8 @@ const HttpRandomAuth = struct {
 
     // Implement contexts.HttpContext.onHttpRequestHeaders.
     fn onHttpRequestHeaders(http_context: *contexts.HttpContext, num_headers: usize, end_of_stream: bool) enums.Action {
+        _ = num_headers;
+        _ = end_of_stream;
         const self: *Self = @fieldParentPtr(Self, "http_context", http_context);
 
         // Get the original response headers.
@@ -795,6 +817,8 @@ const HttpRandomAuth = struct {
 
     // Implement contexts.HttpContext.onHttpResponseHeaders.
     fn onHttpResponseHeaders(http_context: *contexts.HttpContext, num_headers: usize, end_of_stream: bool) enums.Action {
+        _ = num_headers;
+        _ = end_of_stream;
         const self: *Self = @fieldParentPtr(Self, "http_context", http_context);
 
         self.response_callout_id = hostcalls.dispatchHttpCall(
@@ -820,6 +844,8 @@ const HttpRandomAuth = struct {
 
     // Implement contexts.HttpContext.onHttpCalloutResponse.
     fn onHttpCalloutResponse(http_context: *contexts.HttpContext, callout_id: u32, num_headers: usize, body_size: usize, num_trailers: usize) void {
+        _ = num_headers;
+        _ = num_trailers;
         const self: *Self = @fieldParentPtr(Self, "http_context", http_context);
 
         // (Debug) Check the callout ID.
@@ -832,7 +858,7 @@ const HttpRandomAuth = struct {
         defer raw_body.deinit();
 
         // Parse it to httpbinUUIDResponseBody struct.
-        comptime const httpbinUUIDResponseBody = struct { uuid: []const u8 };
+        const httpbinUUIDResponseBody = comptime struct { uuid: []const u8 };
         var stream = std.json.TokenStream.init(raw_body.raw_data);
         var body = std.json.parse(
             httpbinUUIDResponseBody,

@@ -6,13 +6,14 @@ pub fn build(b: *Builder) void {
     b.setPreferredReleaseMode(std.builtin.Mode.Debug);
     const mode = b.standardReleaseOptions();
 
+    // TODO: build exe with -mexec-model=reactor option.
     const lib = b.addSharedLibrary("example", "example/example.zig", b.version(1, 0, 0));
     lib.setBuildMode(mode);
     lib.setTarget(.{ .cpu_arch = .wasm32, .os_tag = .wasi });
     lib.install();
     lib.addPackage(.{
         .name = "proxy-wasm-zig-sdk",
-        .path = "lib/lib.zig",
+        .path = .{ .path = "lib/lib.zig" },
     });
 
     // e2e test setup.

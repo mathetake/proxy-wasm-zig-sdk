@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        zig-version: [ "beta" ]
+        zig-version: [ "edge" ]
         envoy-version: [ "1.18.3" ]
     steps:
       - name: Checkout

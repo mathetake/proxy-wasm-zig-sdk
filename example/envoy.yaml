@@ -18,7 +18,7 @@ bootstrap_extensions:
         runtime: "envoy.wasm.runtime.v8"
         code:
           local:
-            filename: "zig-out/lib/example.wasm"
+            filename: "zig-out/bin/example.wasm"
 
 static_resources:
   listeners:
@@ -64,7 +64,7 @@ static_resources:
                           runtime: "envoy.wasm.runtime.v8"
                           code:
                             local:
-                              filename: "zig-out/lib/example.wasm"
+                              filename: "zig-out/bin/example.wasm"
                   - name: envoy.filters.http.router
                     typed_config: {}
 
@@ -110,7 +110,7 @@ static_resources:
                           runtime: "envoy.wasm.runtime.v8"
                           code:
                             local:
-                              filename: "zig-out/lib/example.wasm"
+                              filename: "zig-out/bin/example.wasm"
                   - name: envoy.filters.http.router
                     typed_config: {}
 
@@ -156,7 +156,7 @@ static_resources:
                           runtime: "envoy.wasm.runtime.v8"
                           code:
                             local:
-                              filename: "zig-out/lib/example.wasm"
+                              filename: "zig-out/bin/example.wasm"
                   - name: envoy.filters.http.router
                     typed_config: {}
 
@@ -185,7 +185,7 @@ static_resources:
                     runtime: "envoy.wasm.runtime.v8"
                     code:
                       local:
-                        filename: "zig-out/lib/example.wasm"
+                        filename: "zig-out/bin/example.wasm"
 
             - name: envoy.tcp_proxy
               typed_config:

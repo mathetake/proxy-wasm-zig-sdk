@@ -21,7 +21,7 @@ fn requireWasmBinary() !void {
     const cwd = try std.process.getCwdAlloc(allocator);
     defer allocator.free(cwd);
 
-    const wasm_path = try std.fmt.allocPrint(allocator, "{s}/zig-out/lib/example.wasm", .{cwd});
+    const wasm_path = try std.fmt.allocPrint(allocator, "{s}/zig-out/bin/example.wasm", .{cwd});
     defer allocator.free(wasm_path);
     const file = try std.fs.openFileAbsolute(wasm_path, .{});
     defer file.close();

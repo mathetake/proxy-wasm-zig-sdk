@@ -9,11 +9,7 @@ extern fn __wasm_call_ctors() void;
 
 const vm_id = "ziglang_vm";
 
-// Must behave as a WASI reactor since otherwise the program exits with proc_exit.
-// That means we must NOT define "pub fn main() void" in the root of your program.
-export fn _initialize() void {
-    // Call the WASI-libc constructors just in case they are used somewhere.
-    __wasm_call_ctors();
+pub fn main() void {
     // Set up the global RootContext function.
     proxywasm.setNewRootContextFunc(newRootContext);
 }

@@ -13,6 +13,7 @@ pub fn build(b: *Builder) void {
         .name = "proxy-wasm-zig-sdk",
         .path = .{ .path = "lib/lib.zig" },
     });
+    bin.bundle_compiler_rt = false;
     bin.wasi_exec_model = .reactor;
     bin.install();
 

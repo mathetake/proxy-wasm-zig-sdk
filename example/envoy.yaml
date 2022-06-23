@@ -1,24 +1,24 @@
 bootstrap_extensions:
-- name: envoy.bootstrap.wasm
-  typed_config:
-    "@type": type.googleapis.com/envoy.extensions.wasm.v3.WasmService
-    singleton: true
-    config:
-      root_id: singleton
-      configuration:
-        "@type": type.googleapis.com/google.protobuf.StringValue
-        value: |
-          {
-            "root": "singleton",
-            "http": "",
-            "tcp": ""
-          }
-      vm_config:
-        vm_id: "ziglang_vm"
-        runtime: "envoy.wasm.runtime.v8"
-        code:
-          local:
-            filename: "zig-out/bin/example.wasm"
+  - name: envoy.bootstrap.wasm
+    typed_config:
+      "@type": type.googleapis.com/envoy.extensions.wasm.v3.WasmService
+      singleton: true
+      config:
+        root_id: singleton
+        configuration:
+          "@type": type.googleapis.com/google.protobuf.StringValue
+          value: |
+            {
+              "root": "singleton",
+              "http": "",
+              "tcp": ""
+            }
+        vm_config:
+          vm_id: "ziglang_vm"
+          runtime: "envoy.wasm.runtime.v8"
+          code:
+            local:
+              filename: "zig-out/bin/example.wasm"
 
 static_resources:
   listeners:
@@ -66,7 +66,8 @@ static_resources:
                             local:
                               filename: "zig-out/bin/example.wasm"
                   - name: envoy.filters.http.router
-                    typed_config: {}
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
     - name: http-body-operation
       address:
@@ -112,7 +113,8 @@ static_resources:
                             local:
                               filename: "zig-out/bin/example.wasm"
                   - name: envoy.filters.http.router
-                    typed_config: {}
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
     - name: http-random-auth
       address:
@@ -158,7 +160,8 @@ static_resources:
                             local:
                               filename: "zig-out/bin/example.wasm"
                   - name: envoy.filters.http.router
-                    typed_config: {}
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
     - name: tcp-total-data-size-counter
       address:

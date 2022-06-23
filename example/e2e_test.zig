@@ -5,14 +5,14 @@ const assert = debug.assert;
 
 test "Run End-to-End test with Envoy proxy" {
     try requireWasmBinary();
-    const envoy = try requireRunAndWaitEnvoyStarted();
+    var envoy = try requireRunAndWaitEnvoyStarted();
     defer _ = envoy.kill() catch unreachable;
     errdefer printFileReader(envoy.stderr.?.reader()) catch unreachable;
     try requireHttpHeaderOperations();
     try requireHttpBodyOperations();
     try requireHttpRandomAuth();
     try requireTcpDataSizeCounter();
-    try requireEnvoyLogs(envoy);
+    try requireEnvoyLogs(&envoy);
 }
 
 const E2EError = error{RequiredStringNotFound};
@@ -35,10 +35,10 @@ fn requireWasmBinary() !void {
     assert(std.mem.eql(u8, header_buf[0..], exp_header[0..]));
 }
 
-fn requireRunAndWaitEnvoyStarted() !*std.ChildProcess {
+fn requireRunAndWaitEnvoyStarted() !std.ChildProcess {
     // Create a child process.
     const envoy_argv = [_][]const u8{ "envoy", "-c", "example/envoy.yaml", "--concurrency", "2" };
-    const envoy = try std.ChildProcess.init(envoy_argv[0..], allocator);
+    var envoy = std.ChildProcess.init(envoy_argv[0..], allocator);
 
     envoy.stdin_behavior = .Ignore;
     envoy.stdout_behavior = .Ignore;

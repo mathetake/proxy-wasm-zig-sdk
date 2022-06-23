@@ -11,7 +11,7 @@ pub fn build(b: *Builder) void {
     bin.setTarget(.{ .cpu_arch = .wasm32, .os_tag = .wasi });
     bin.addPackage(.{
         .name = "proxy-wasm-zig-sdk",
-        .path = .{ .path = "lib/lib.zig" },
+        .source = .{ .path = "lib/lib.zig" },
     });
     bin.wasi_exec_model = .reactor;
     bin.install();
